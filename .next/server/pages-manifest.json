@@ -2,7 +2,8 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js",
-  "/api/todos/delete/[id]": "pages/api/todos/delete/[id].js",
-  "/api/todos": "pages/api/todos.js"
+  "/todos": "pages/todos.js",
+  "/api/todos/create": "pages/api/todos/create.js",
+  "/api/todos": "pages/api/todos.js",
+  "/api/todos/[id]": "pages/api/todos/[id].js"
 }
