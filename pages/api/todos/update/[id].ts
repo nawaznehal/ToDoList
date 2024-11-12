@@ -1,38 +1,35 @@
-// pages/api/todos/update/[id].ts
-
-import { PrismaClient } from '@prisma/client'
-import type { NextApiRequest, NextApiResponse } from 'next'
-
-const prisma = new PrismaClient()
+import { NextApiRequest, NextApiResponse } from 'next';
+import prisma from '../../../../lib/prisma';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { id } = req.query
+  const { id } = req.query;
+  const { title, completed } = req.body;
 
   if (req.method === 'PUT') {
     try {
-      const { title, description, completed } = req.body
-
-      // Check if to-do item exists
-      const existingToDo = await prisma.toDoItem.findUnique({
+      // Use the correct model name "task" instead of "toDoItem"
+      const existingToDo = await prisma.task.findUnique({
         where: { id: Number(id) },
-      })
+      });
 
       if (!existingToDo) {
-        return res.status(404).json({ message: 'To-Do item not found' })
+        return res.status(404).json({ error: 'To-Do item not found' });
       }
 
-      // Update the to-do item
-      const updatedToDo = await prisma.toDoItem.update({
+      const updatedToDo = await prisma.task.update({
         where: { id: Number(id) },
-        data: { title, description, completed },
-      })
+        data: {
+          title,
+          completed,
+        },
+      });
 
-      return res.status(200).json(updatedToDo)
+      return res.status(200).json(updatedToDo);
     } catch (error) {
-      console.error(error)
-      return res.status(500).json({ message: 'Internal Server Error' })
+      console.error(error);
+      return res.status(500).json({ error: 'Failed to update to-do item' });
     }
   } else {
-    return res.status(405).json({ message: 'Method Not Allowed' })
+    res.status(405).json({ error: 'Method Not Allowed' });
   }
 }
