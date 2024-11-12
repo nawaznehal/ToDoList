@@ -1,34 +1,26 @@
-// pages/api/todos/search.ts
-
-import type { NextApiRequest, NextApiResponse } from 'next'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { NextApiRequest, NextApiResponse } from 'next';
+import prisma from '../../../lib/prisma';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { query } = req.query
+  const { query } = req.query;
 
   if (req.method === 'GET') {
     try {
-      const toDoItems = await prisma.toDoItem.findMany({
+      // Use the correct model name "task" instead of "toDoItem"
+      const toDoItems = await prisma.task.findMany({
         where: {
           title: {
             contains: String(query),  // This is case-insensitive
-            mode: 'insensitive',       // Ensures case insensitivity
+            mode: 'insensitive',
           },
         },
-      })
-
-      if (toDoItems.length === 0) {
-        return res.status(404).json({ message: 'No to-do items found' })
-      }
-
-      return res.status(200).json(toDoItems)
+      });
+      return res.status(200).json(toDoItems);
     } catch (error) {
-      console.error(error)
-      return res.status(500).json({ message: 'Internal Server Error' })
+      console.error(error);
+      return res.status(500).json({ error: 'Failed to search to-do items' });
     }
   } else {
-    return res.status(405).json({ message: 'Method Not Allowed' })
+    res.status(405).json({ error: 'Method Not Allowed' });
   }
 }
