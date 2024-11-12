@@ -1,36 +1,21 @@
-// pages/api/todos/create.ts
+import { NextApiRequest, NextApiResponse } from 'next';
+import prisma from '../../../lib/prisma';
 
-import type { NextApiRequest, NextApiResponse } from 'next'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
-
-// Define the handler for creating a new to-do
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
+    const { title } = req.body;
     try {
-      const { title } = req.body
-
-      // Check if title is provided
-      if (!title) {
-        return res.status(400).json({ message: 'Title is required' })
-      }
-
-      // Create a new to-do item in the database
-      const newToDo = await prisma.toDoItem.create({
+      // Use the correct model name "task" instead of "toDoItem"
+      const newToDo = await prisma.task.create({
         data: {
           title,
         },
-      })
-
-      // Return the created to-do item as the response
-      return res.status(201).json(newToDo)
+      });
+      res.status(201).json(newToDo); // Return the created task
     } catch (error) {
-      console.error(error)
-      return res.status(500).json({ message: 'Internal Server Error' })
+      res.status(500).json({ error: 'Failed to create new task' });
     }
   } else {
-    // Handle any non-POST requests
-    return res.status(405).json({ message: 'Method Not Allowed' })
+    res.status(405).json({ error: 'Method Not Allowed' });
   }
 }
