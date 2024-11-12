@@ -1,36 +1,20 @@
-// pages/api/todos/delete/[id].ts
-
-import { PrismaClient } from '@prisma/client'
-import type { NextApiRequest, NextApiResponse } from 'next'
-
-const prisma = new PrismaClient()
+import { NextApiRequest, NextApiResponse } from 'next';
+import prisma from '../../../../lib/prisma';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { id } = req.query
+  const { id } = req.query;
 
   if (req.method === 'DELETE') {
     try {
-      // Check if the to-do item exists
-      const toDoItem = await prisma.toDoItem.findUnique({
-        where: { id: Number(id) },
-      })
-
-      if (!toDoItem) {
-        return res.status(404).json({ message: 'To-Do item not found' })
-      }
-
-      // Delete the to-do item
-      await prisma.toDoItem.delete({
-        where: { id: Number(id) },
-      })
-
-      // Return a success message
-      return res.status(200).json({ message: 'To-Do item deleted successfully' })
+      // Use the correct model name "task" instead of "toDoItem"
+      const deletedToDo = await prisma.task.delete({
+        where: { id: Number(id) }, // Ensure id is a number
+      });
+      res.status(200).json(deletedToDo); // Return the deleted task
     } catch (error) {
-      console.error(error)
-      return res.status(500).json({ message: 'Internal Server Error' })
+      res.status(500).json({ error: 'Failed to delete task' });
     }
   } else {
-    return res.status(405).json({ message: 'Method Not Allowed' })
+    res.status(405).json({ error: 'Method Not Allowed' });
   }
 }
