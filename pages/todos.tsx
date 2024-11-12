@@ -10,6 +10,7 @@ const TodosPage = () => {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTodo, setNewTodo] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Fetch todos from the API
   const fetchTodos = async () => {
@@ -19,10 +20,10 @@ const TodosPage = () => {
       if (response.ok) {
         setTodos(data);
       } else {
-        console.error('Failed to fetch to-dos:', data.message);
+        setErrorMessage('Failed to fetch to-dos.');
       }
     } catch (error) {
-      console.error('Error fetching to-dos:', error);
+      setErrorMessage('Error fetching to-dos.');
     } finally {
       setLoading(false);
     }
@@ -37,18 +38,23 @@ const TodosPage = () => {
     e.preventDefault();
     if (!newTodo) return;
 
-    const response = await fetch('/api/todos/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: newTodo }),
-    });
+    try {
+      const response = await fetch('/api/todos/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTodo }),
+      });
 
-    const data = await response.json();
-    if (response.ok) {
-      setTodos([...todos, data]); // Add the new to-do to the list
-      setNewTodo(''); // Reset input field
-    } else {
-      console.error('Failed to create to-do:', data.message);
+      const data = await response.json();
+      if (response.ok) {
+        // Use callback version of setTodos to ensure we have the latest state
+        setTodos((prevTodos) => [...prevTodos, data]);
+        setNewTodo('');
+      } else {
+        setErrorMessage('Failed to create to-do.');
+      }
+    } catch (error) {
+      setErrorMessage('Error creating to-do.');
     }
   };
 
@@ -59,37 +65,49 @@ const TodosPage = () => {
 
     const updatedTodo = { ...todo, completed: !todo.completed };
 
-    const response = await fetch(`/api/todos/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedTodo),
-    });
+    try {
+      const response = await fetch(`/api/todos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedTodo),
+      });
 
-    const data = await response.json();
-    if (response.ok) {
-      setTodos(todos.map((todo) => (todo.id === id ? data : todo))); // Update the to-do in the list
-    } else {
-      console.error('Failed to update to-do:', data.message);
+      const data = await response.json();
+      if (response.ok) {
+        setTodos((prevTodos) =>
+          prevTodos.map((todo) => (todo.id === id ? data : todo))
+        );
+      } else {
+        setErrorMessage('Failed to update to-do.');
+      }
+    } catch (error) {
+      setErrorMessage('Error updating to-do.');
     }
   };
 
   // Handle deleting a to-do
   const deleteTodo = async (id: number) => {
-    const response = await fetch(`/api/todos/${id}`, {
-      method: 'DELETE',
-    });
+    try {
+      const response = await fetch(`/api/todos/${id}`, {
+        method: 'DELETE',
+      });
 
-    const data = await response.json();
-    if (response.ok) {
-      setTodos(todos.filter((todo) => todo.id !== id)); // Remove the to-do from the list
-    } else {
-      console.error('Failed to delete to-do:', data.message);
+      if (response.ok) {
+        setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
+      } else {
+        setErrorMessage('Failed to delete to-do.');
+      }
+    } catch (error) {
+      setErrorMessage('Error deleting to-do.');
     }
   };
 
   return (
     <div>
       <h1>To-Do List</h1>
+
+      {/* Display error message if any */}
+      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 
       {/* Create To-Do Form */}
       <form onSubmit={handleCreateTodo}>
